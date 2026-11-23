@@ -1,0 +1,21 @@
+# Dataset - download from the Drive link in README
+dataset-1/
+dataset-1.zip
+*.zip
+
+# Unrelated pretrained weights (NH-HAZE dehazing, 536 MB, not used by this project)
+*.pt
+
+# Landing-page videos (large, not needed to run the classifier)
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.ipynb_checkpoints/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

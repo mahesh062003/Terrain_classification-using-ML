@@ -1,76 +1,123 @@
 # Terrain Classification Web App
 
-## Overview
+A CNN that classifies terrain photographs into **grassy**, **marshy**, **rocky**
+or **sandy**, served through a Flask upload interface.
 
-This web application allows users to explore and classify different terrains from images. It utilizes a Convolutional Neural Network (CNN) to analyze uploaded images and predict the terrain type, such as grassy, marshy, rocky, or sandy.
+Built for route and traversability assessment: the terrain type under a vehicle
+or robot determines whether a path is passable, and it can be read from a
+single downward photograph without any additional sensor.
 
-## Table of Contents
+---
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Dependencies](#dependencies)
-- [Model](#model)
-- [File Structure](#file-structure)
-- [Screenshots](#screenshots)
-- [Contributing](#contributing)
+## Result
 
+**90.4% test accuracy** on a held-out 778-image test set, four classes.
+Measured by re-running the trained `model.h5` against `dataset-1/test`:
 
-## Installation
+| Class | Precision | Recall | F1 | Support |
+|---|---|---|---|---|
+| grassy | 0.923 | 0.923 | 0.923 | 91 |
+| marshy | 0.869 | 0.894 | 0.881 | 170 |
+| rocky | 0.823 | 0.940 | 0.878 | 183 |
+| sandy | 0.974 | 0.883 | 0.926 | 334 |
+| **accuracy** | | | **0.904** | 778 |
+| macro avg | 0.897 | 0.910 | 0.902 | 778 |
+| weighted avg | 0.909 | 0.904 | 0.905 | 778 |
 
-1. Clone the repository:
+**Performance is even across classes despite an imbalanced training set.**
+`sandy` has nearly four times the training images of `grassy` (779 vs 212),
+so the obvious worry is a model that simply learns to answer "sandy". That is
+not what happened: macro-F1 (0.902) and accuracy (0.904) are within two
+thousandths of each other, and `grassy` — the smallest class — has the
+*highest* per-class F1 at 0.923. The imbalance is real in the data but did not
+translate into biased predictions.
 
-   ```bash
-   git clone https://github.com/Mahesh062003/Terrain_classification-using-ML.git
+The weakest cell is `rocky` precision at 0.823 against 0.940 recall: the model
+over-predicts `rocky`, pulling in some `marshy` and `sandy` images. `sandy`
+shows the mirror image — 0.974 precision, 0.883 recall — so the main confusion
+is rocky/sandy in both directions.
 
-    ```
-1.Install the required Python packages:
+### A correction to an earlier reported figure
+
+An evaluation cell in `notebooks/model-final.ipynb` previously reported **30.3%
+accuracy with a macro-F1 of 0.25** — barely above the 25% chance baseline for
+four classes. That number was wrong, and the cause was a bug rather than a
+model failure:
+
+```python
+test_generator = test_datagen.flow_from_directory(...)   # shuffle defaults to True
+predictions   = model.predict(test_generator, ...)       # consumed in SHUFFLED order
+true_classes  = test_generator.classes                   # returned in DIRECTORY order
+```
+
+`flow_from_directory` shuffles by default, so `predict()` walked the images in
+one order while `.classes` reported labels in another. The two arrays were
+compared element-wise while misaligned, which scores at approximately chance no
+matter how good the model is.
+
+This was confirmed rather than assumed. Deliberately misaligning the labels
+against the same predictions reproduces **31.1%** — matching the original 30.3%
+and establishing the mechanism. The same predictions scored correctly give
+90.4%.
+
+`model.evaluate()` was never affected: it pairs each batch's inputs with that
+same batch's labels, so shuffling cannot desynchronise them.
+
+The notebook now passes `shuffle=False` on the evaluation generator, so the
+classification report and confusion matrix it produces are meaningful.
+
+### Training distribution
+
+| Class | Train | Test |
+|---|---|---|
+| sandy | 779 (42%) | 334 |
+| rocky | 426 (23%) | 183 |
+| marshy | 396 (21%) | 170 |
+| grassy | 212 (11%) | 91 |
+
+---
+
+## Running it
+
 ```bash
 pip install -r requirements.txt
+python app.py        # http://localhost:5000
 ```
-## Usage 
-1.Run the Flask application:
-```bash
-Pythhon app.py
+
+Upload an image on the Upload page; the predicted terrain is rendered back.
+
+`app.py` resizes to 224x224, rescales to [0,1], and takes the argmax over the
+four-class softmax.
+
+## Model weights
+
+`model.h5` (267 MB) is tracked with **Git LFS** (see `.gitattributes`). Note
+that GitHub's free LFS tier allows 1 GB of storage and 1 GB of bandwidth per
+month — a 267 MB file consumes that bandwidth quickly across clones. Attaching
+the weights to a GitHub Release instead would avoid the limit entirely.
+
+## Dataset
+
+Four class directories under `dataset-1/{train,test}/`. Not committed —
+[download from Drive](https://drive.google.com/drive/folders/1OOc-ceo7eF1stmN8JTUL4JNnnqNDklQ-?usp=drive_link).
+
 ```
-2.Open your web browser and go to http://localhost:5000.
-
-3.Explore the different sections:
-
-Home: Explore the terrains with captivating videos.
-Upload: Upload an image to classify the terrain type.
-About: Learn more about the application and how it works.
-
-# Dependencies 
-
-Dependencies
-Flask
-TensorFlow
-NumPy
-Install all dependencies using:
-
-```bash
-
-pip install -r requirements.txt
+dataset-1/
+  train/  grassy/ marshy/ rocky/ sandy/
+  test/   grassy/ marshy/ rocky/ sandy/
 ```
-# Model
-The application uses a pre-trained CNN model for terrain classification. The model file (`model.h5`) is stored in the `model` directory. Update the class names in the model based on your requirements.
 
-# File Structure
-- **static:** Contains video files for the landing page.
-- **templates:** Contains HTML templates for rendering web pages.
-- **model:** Stores the pre-trained CNN model.
-- **app.py:** Flask application script.
-- **index.html:** Main HTML file for the web app.
-- **README.md:** Documentation file.
+## Notes on repository hygiene
 
+Two things fixed while preparing this:
 
-## Screenshots 
-![image](https://github.com/mahesh062003/Terrain_classification/assets/92420298/af137767-7e5a-424f-9db9-87b65d7f85ce)
-![image](https://github.com/mahesh062003/Terrain_classification/assets/92420298/5d1524f9-9bcf-4f68-a632-8285d0473977)
-![image](https://github.com/mahesh062003/Terrain_classification/assets/92420298/38f680f2-d9d6-404f-8a15-e72d90498739)
+- `Requirements.txt` was capitalised while the install instruction said
+  `requirements.txt`. That works on Windows and **fails on Linux and macOS**,
+  where filenames are case-sensitive. Renamed to lowercase.
+- A 536 MB `NH-HAZE_params_0100000.pt` file sat in the project directory. It is
+  a pretrained **image-dehazing** model, is not referenced by any code here,
+  and is not mine — it is now gitignored rather than published.
 
+## Stack
 
-## Contributing 
-Feel free to contribute to the project. Create a fork, make your changes, and submit a pull request.
-
-
+Python · TensorFlow/Keras · Flask · NumPy
