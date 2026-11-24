@@ -48,6 +48,7 @@ in both directions between rocky and sandy.
 
 ```bash
 pip install -r requirements.txt
+# download model.h5 from the v1.0.0 release into this directory first
 python app.py        # http://localhost:5000
 ```
 
@@ -62,9 +63,12 @@ the four-class softmax.
 
 ## Model weights
 
-`model.h5` (267 MB) is tracked with Git LFS. GitHub's free LFS tier allows 1 GB
-of storage and 1 GB of bandwidth per month, which a file this size consumes
-quickly across clones — attaching the weights to a Release avoids the limit.
+The trained weights are **not committed** — download `model.h5` (255 MB) from
+the [v1.0.0 release](https://github.com/mahesh062003/Terrain_classification-using-ML/releases/tag/v1.0.0)
+and place it in the repository root before running `app.py`.
+
+Release assets are used rather than Git LFS because the free LFS tier allows
+1 GB of bandwidth per month, which a file this size exhausts in four clones.
 
 ## Dataset
 
