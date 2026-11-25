@@ -48,7 +48,7 @@ in both directions between rocky and sandy.
 
 ```bash
 pip install -r requirements.txt
-# download model.h5 from the v1.0.0 release into this directory first
+# train model.h5 with notebooks/model-final.ipynb first
 python app.py        # http://localhost:5000
 ```
 
@@ -63,12 +63,9 @@ the four-class softmax.
 
 ## Model weights
 
-The trained weights are **not committed** — download `model.h5` (255 MB) from
-the [v1.0.0 release](https://github.com/mahesh062003/Terrain_classification-using-ML/releases/tag/v1.0.0)
-and place it in the repository root before running `app.py`.
-
-Release assets are used rather than Git LFS because the free LFS tier allows
-1 GB of bandwidth per month, which a file this size exhausts in four clones.
+Not distributed. `notebooks/model-final.ipynb` trains the classifier from
+scratch in 35 epochs — run it against the dataset below to produce `model.h5`,
+then place it in the repository root before starting `app.py`.
 
 ## Dataset
 
