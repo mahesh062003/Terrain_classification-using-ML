@@ -81,3 +81,16 @@ dataset-1/
 ## Stack
 
 Python · TensorFlow/Keras · Flask · NumPy
+
+---
+
+## Use
+
+© 2026 Mahesh Veeraiah R. All rights reserved.
+
+Published for review and assessment. Not licensed for reuse, redistribution or
+modification — please get in touch about any other use.
+
+Datasets referenced above are **not included and are not mine**. Each remains
+the property of its provider and is subject to that provider's own licence and
+terms. Obtain them from the sources named, and comply with those terms.
